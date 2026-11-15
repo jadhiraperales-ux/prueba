@@ -57,21 +57,21 @@
     <div class="screen" id="arena">
       <div id="rover" class="rover">🤖</div>
 
-      <!-- Menu de Inicio -->
+      <!-- Start Menu -->
       <div id="screen-start" class="overlay">
         <h2>SPIRIT ROVER ROUTE</h2>
         <p>NASA Educational Mission: Collect 5 Silica Orbs (+100 pts) to advance. Dodge sand traps and rocks!</p>
         <button class="btn" id="start-click-btn">START MISSION</button>
       </div>
 
-      <!-- Pantalla Informativa -->
+      <!-- Info Screen -->
       <div id="screen-fact" class="overlay hidden">
         <h2 id="fact-title" style="color: #66ccff;">MISSION BRIEFING</h2>
         <p id="fact-text"></p>
         <button class="btn" id="fact-click-btn">CONTINUE MISSION</button>
       </div>
 
-      <!-- Pantalla Final -->
+      <!-- End Screen -->
       <div id="screen-end" class="overlay hidden">
         <h2 id="end-title">MISSION OVER</h2>
         <p id="end-text"></p>
@@ -104,7 +104,6 @@
     const arena = document.getElementById('arena');
     const roverEl = document.getElementById('rover');
 
-    // Controles por teclado y clicks
     function moveRover(amount) {
       if (state !== 'playing') return;
       roverX = Math.max(10, Math.min(90, roverX + amount));
@@ -118,10 +117,7 @@
 
     document.getElementById('btn-left').addEventListener('click', () => moveRover(-10));
     document.getElementById('btn-right').addEventListener('click', () => moveRover(10));
-    document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); moveRover(-10); });
-    document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); moveRover(10); });
 
-    // Asignación de botones de menú
     document.getElementById('start-click-btn').addEventListener('click', setupNewGame);
     document.getElementById('fact-click-btn').addEventListener('click', setupNextLevel);
     document.getElementById('end-click-btn').addEventListener('click', setupNewGame);
@@ -168,26 +164,23 @@
         entity.y += fallSpeed * dt;
         entity.el.style.top = entity.y + 'px';
 
-        // Detección básica de colisiones
         if (entity.y > 290 && entity.y  360) {
           entity.el.remove();
           entities.splice(i, 1);
         }
       }
 
-      // Actualizar interfaz
       document.getElementById('hud-level').textContent = `LEVEL: ${level}/3`;
       document.getElementById('hud-score').textContent = `SCORE: ${score}/${level * 500}`;
       const energyHud = document.getElementById('hud-energy');
       energyHud.textContent = `ENERGY: ${Math.max(0, Math.ceil(energy))}%`;
       energyHud.style.color = energy > 30 ? '#66ff66' : '#ff4d4d';
 
-      // Condiciones de fin o victoria
       if (energy <= 0) {
         state = 'gameover';
         document.getElementById('end-title').textContent = 'MISSION FAILED';
         document.getElementById('end-title').style.color = '#ff4d4d';
-        document.getElementById('end-text').textContent = 'Your rover got permanently stuck in the sand dunes or ran out of solar battery.';
+        document.getElementById('end-text').textContent = 'Your rover got permanently stuck in the sand dunes.';
         document.getElementById('screen-end').classList.remove('hidden');
         return;
       }
@@ -213,4 +206,3 @@
   </script>
 </body>
 </html>
-
