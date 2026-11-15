@@ -1,2 +1,2 @@
 # prueba
-vamos a probar jueguitos 
+probar jueguitos 
