@@ -1,1 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Spirit Route - NASA Educational Game</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #0d0600;
+      color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .game-wrapper {
+      width: 100%;
+      max-width: 480px;
+      background: #1a0d00;
+      padding: 18px;
+      border-radius: 14px;
+      border: 2px solid #ff751a;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: linear-gradient(180deg, #3d1400 0%, #802b00 100%);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid #cc5200;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 7, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      z-index: 10;
+    }
+    .hidden { display: none !important; }
+    h2 { color: #ff944d; margin: 0 0 10px; font-size: 22px; }
+    p { font-size: 14px; line-height: 1.5; color: #f2d9cc; margin: 0 0 20px; }
+    .btn {
+      background: linear-gradient(135deg, #ff944d, #e65c00);
+      color: #fff;
+      border: none;
+      padding: 12px 26px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 24px;
+      cursor: pointer;
+    }
+    .rover {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      width: 48px;
+      height: 40px;
+      transform: translateX(-50%);
+      font-size: 32px;
+      line-height: 40px;
+      transition: left 0.08s ease-out;
+    }
+    .entity {
+      position: absolute;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .sand {
+      width: 64px;
+      height: 28px;
+      background: #d99b26;
+      border-radius: 50%;
+      box-shadow: inset 0 0 8px #664400;
+      font-size: 14px;
+    }
+    .rock {
+      width: 38px;
+      height: 32px;
+      background: #595959;
+      border-radius: 8px;
+      font-size: 20px;
+    }
+    .orb {
+      width: 30px;
+      height: 30px;
+      background: #4dc3ff;
+      border-radius: 50%;
+      box-shadow: 0 0 14px #66ccff;
+      font-size: 16px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .touch-btn {
+      flex: 1;
+      background: rgba(255, 117, 26, 0.15);
+      border: 2px solid #ff751a;
+      color: #ff944d;
+      padding: 16px 0;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .touch-btn:active { background: rgba(255, 117, 26, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="hud">
+      <span id="hud-level">LEVEL: 1/3</span>
+      <span id="hud-score" style="color: #ffb366;">SCORE: 0 / 500</span>
+      <span id="hud-energy" style="color: #66ff66;">ENERGY: 100%</span>
+    </div>
+
+    <div class="screen" id="arena">
+      <div id="rover" class="rover">🤖</div>
+
+      <div id="screen-start" class="overlay">
+        <h2>SPIRIT ROVER ROUTE</h2>
+        <p>Collect 5 Silica Orbs (+100 pts each) to unlock NASA discoveries and advance levels. Dodge sand traps and rocks!</p>
+        <button class="btn" onclick="startGame()">START MISSION</button>
+      </div>
+
+      <div id="screen-fact" class="overlay hidden">
+        <h2 id="fact-title" style="color: #66ccff;">LEVEL COMPLETED</h2>
+        <p id="fact-text"></p>
+        <button class="btn" onclick="nextLevel()">CONTINUE MISSION</button>
+      </div>
+
+      <div id="screen-end" class="overlay hidden">
+        <h2 id="end-title">MISSION OVER</h2>
+        <p id="end-text"></p>
+        <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="touch-btn" id="btn-left">⬅️ LEFT</button>
+      <button class="touch-btn" id="btn-right">RIGHT ➡️</button>
+    </div>
+  </div>
+
+  <script>
+    const facts = [
+      {
+        title: "LEVEL 1: The Broken Wheel Effect",
+        text: "In 2006, Spirit's front-right wheel broke. Driving backwards while dragging that wheel accidentally uncovered hidden layers of Martian soil!"
+      },
+      {
+        title: "LEVEL 2: Trapped in Troy",
+        text: "In 2009, Spirit got stuck in a soft sand trap named 'Troy'. NASA turned the rover into a stationary science lab to keep studying Mars."
+      },
+      {
+        title: "MISSION COMPLETE: Pure Silica!",
+        text: "Spirit's broken wheel exposed 90% pure silica. This proved ancient Mars had hot springs or steam vents capable of supporting microbial life!"
+      }
+    ];
+
+    let state = 'start';
+    let level = 1;
+    let score = 0;
+    let energy = 100;
+    let roverX = 50;
+    let entities = [];
+    let lastTime = 0;
+
+    const arena = document.getElementById('arena');
+    const roverEl = document.getElementById('rover');
+
+    function moveRover(delta) {
+      if (state !== 'playing') return;
+      roverX = Math.max(12, Math.min(88, roverX + delta));
+      roverEl.style.left = roverX + '%';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveRover(-14);
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRover(14);
+    });
+
+    document.getElementById('btn-left').addEventListener('pointerdown', () => moveRover(-14));
+    document.getElementById('btn-right').addEventListener('pointerdown', () => moveRover(14));
+
+    function clearEntities() {
+      entities.forEach(e => e.el.remove());
+      entities = [];
+    }
+
+    function startGame() {
+      level = 1;
+      score = 0;
+      energy = 100;
+      roverX = 50;
+      roverEl.style.left = '50%';
+      clearEntities();
+      hideOverlays();
+      state = 'playing';
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function nextLevel() {
+      level++;
+      roverX = 50;
+      roverEl.style.left = '50%';
+      clearEntities();
+      hideOverlays();
+      state = 'playing';
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function hideOverlays() {
+      document.getElementById('screen-start').classList.add('hidden');
+      document.getElementById('screen-fact').classList.add('hidden');
+      document.getElementById('screen-end').classList.add('hidden');
+    }
+
+    function spawnEntity() {
+      const r = Math.random();
+      let type = 'orb';
+      let icon = '💎';
+      if (r = 0; i--) {
+        const item = entities[i];
+        item.y += speed * dt;
+        item.el.style.top = item.y + 'px';
+
+        const itemPxX = (item.x / 100) * arena.clientWidth;
+        const hitX = Math.abs(itemPxX - roverPxX) < 34;
+        const hitY = Math.abs(item.y - roverPxY) < 26;
+
+        if (hitX && hitY) {
+          if (item.type === 'orb') {
+            score += 100;
+            item.el.remove();
+            entities.splice(i, 1);
+          } else if (item.type === 'sand') {
+            energy -= 22 * dt;
+          } else if (item.type === 'rock') {
+            energy -= 18;
+            item.el.remove();
+            entities.splice(i, 1);
+          }
+          continue;
+        }
+
+        if (item.y > arena.clientHeight + 30) {
+          item.el.remove();
+          entities.splice(i, 1);
+        }
+      }
+
+      updateHud();
+
+      if (energy <= 0) {
+        state = 'gameover';
+        document.getElementById('end-title').textContent = 'MISSION FAILED';
+        document.getElementById('end-title').style.color = '#ff4d4d';
+        document.getElementById('end-text').textContent = 'Your rover ran out of energy in the Martian terrain.';
+        document.getElementById('screen-end').classList.remove('hidden');
+        return;
+      }
+
+      if (score >= level * 500) {
+        if (level === 3) {
+          state = 'victory';
+          document.getElementById('end-title').textContent = 'MISSION SUCCESS!';
+          document.getElementById('end-title').style.color = '#66ff66';
+          document.getElementById('end-text').textContent = facts[2].text;
+          document.getElementById('screen-end').classList.remove('hidden');
+        } else {
+          state = 'fact';
+          document.getElementById('fact-title').textContent = facts[level - 1].title;
+          document.getElementById('fact-text').textContent = facts[level - 1].text;
+          document.getElementById('screen-fact').classList.remove('hidden');
+        }
+        return;
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function updateHud() {
 
